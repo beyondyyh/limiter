@@ -1,5 +1,3 @@
-// @Copyright Weibo.Inc
-// @Author Yehong.Yang<yehong@staff.weibo.com>
 // @Date 2020/05/22 10:58:00
 // @package limiter Common Rate Limit
 // There are many ways, such as:
