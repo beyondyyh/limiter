@@ -41,5 +41,17 @@ func (l *LeakyBucket) Allow() bool {
 		l.water++
 		return true
 	}
+
 	return false
+}
+
+func (l *LeakyBucket) Run(fn func()) error {
+	if !l.Allow() {
+		return ErrFreqExceed
+	}
+
+	// Invoke fn
+	fn()
+
+	return nil
 }

@@ -22,7 +22,7 @@ func NewTokenBucket(rate, cap int64) *TokenBucket {
 	return &TokenBucket{
 		rate:         rate,
 		capacity:     cap,
-		tokens:       0,
+		tokens:       cap, // 初始时桶是满的
 		lastTokenSec: time.Now().Unix(),
 	}
 }
@@ -46,4 +46,15 @@ func (l *TokenBucket) Allow() bool {
 	}
 	// 没有令牌，则拒绝
 	return false
+}
+
+func (l *TokenBucket) Run(fn func()) error {
+	if !l.Allow() {
+		return ErrFreqExceed
+	}
+
+	// Invoke fn
+	fn()
+
+	return nil
 }

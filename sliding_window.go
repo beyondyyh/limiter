@@ -20,7 +20,7 @@ type SlidingWindowLimiter struct {
 	mu           sync.Mutex    // 互斥锁保护其他字段
 }
 
-func NewSlidingWindowLimiter(slotDuration time.Duration, winDuration time.Duration, maxReq int) *SlidingWindowLimiter {
+func NewSlidingWindowLimiter(slotDuration, winDuration time.Duration, maxReq int) *SlidingWindowLimiter {
 	return &SlidingWindowLimiter{
 		slotDuration: slotDuration,
 		winDuration:  winDuration,
@@ -76,4 +76,15 @@ func (l *SlidingWindowLimiter) countReq() int {
 		count += ts.count
 	}
 	return count
+}
+
+func (l *SlidingWindowLimiter) Run(fn func()) error {
+	if !l.Allow() {
+		return ErrFreqExceed
+	}
+
+	// Invoke fn
+	fn()
+
+	return nil
 }

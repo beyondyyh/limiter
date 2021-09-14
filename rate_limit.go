@@ -3,8 +3,13 @@ package limiter
 // 静态时间窗口，也叫访问计数
 
 import (
+	"errors"
 	"sync"
 	"time"
+)
+
+var (
+	ErrFreqExceed = errors.New("frequency exceed")
 )
 
 type RateLimiter struct {
@@ -15,7 +20,7 @@ type RateLimiter struct {
 	mu     sync.Mutex    // 锁
 }
 
-func (l *RateLimiter) NewRateLimiter(rate int, period time.Duration) *RateLimiter {
+func NewRateLimiter(rate int, period time.Duration) *RateLimiter {
 	return &RateLimiter{
 		rate:   rate,
 		begin:  time.Now(),
@@ -29,11 +34,11 @@ func (l *RateLimiter) Allow() bool {
 	defer l.mu.Unlock()
 
 	// 判断收到的请求数是否达到阈值
-	if l.count == l.rate-1 {
+	if l.count >= l.rate-1 {
 		now := time.Now()
 		// 达到阈值后，当前请求如果不在计数周期内，重置计数器
-		if now.Sub(l.begin) >= l.period {
-			l.Reset(now)
+		if now.Sub(l.begin) > l.period {
+			l.reset(now)
 			return true
 		}
 		return false
@@ -43,7 +48,18 @@ func (l *RateLimiter) Allow() bool {
 	return true
 }
 
-func (l *RateLimiter) Reset(begin time.Time) {
+func (l *RateLimiter) reset(begin time.Time) {
 	l.begin = begin
 	l.count = 0
+}
+
+func (l *RateLimiter) Run(fn func()) error {
+	if !l.Allow() {
+		return ErrFreqExceed
+	}
+
+	// Invoke fn
+	fn()
+
+	return nil
 }
